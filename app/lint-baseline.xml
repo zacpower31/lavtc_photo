@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 7.4.1" type="baseline" client="gradle" dependencies="false" name="AGP (7.4.1)" variant="fatal" version="7.4.1">
+
+    <issue
+        id="Instantiatable"
+        message="This class should provide a default constructor (a public constructor with no arguments) (`com.example.lavtc_photo.Drive_Sync`)"
+        errorLine1="            android:name=&quot;.Drive_Sync&quot;"
+        errorLine2="                          ~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="25"
+            column="27"/>
+    </issue>
+
+    <issue
+        id="Instantiatable"
+        message="`Drive_Sync` must extend android.app.Activity"
+        errorLine1="            android:name=&quot;.Drive_Sync&quot;"
+        errorLine2="                          ~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="25"
+            column="27"/>
+    </issue>
+
+    <issue
+        id="Instantiatable"
+        message="This class should provide a default constructor (a public constructor with no arguments) (`com.example.lavtc_photo.pdf_save_dialogbox`)"
+        errorLine1="            android:name=&quot;.pdf_save_dialogbox&quot;"
+        errorLine2="                          ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="28"
+            column="27"/>
+    </issue>
+
+    <issue
+        id="Instantiatable"
+        message="`pdf_save_dialogbox` must extend android.app.Activity"
+        errorLine1="            android:name=&quot;.pdf_save_dialogbox&quot;"
+        errorLine2="                          ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="28"
+            column="27"/>
+    </issue>
+
+</issues>

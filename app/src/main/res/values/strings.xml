@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Lavtc Photo App</string>
+    <string name="navigation_drawer_open" />
+    <string name="navigation_drawer_close" />
+    <string name="main_heading"> <u>LAVTC PHOTO</u>.</string>
+
+
+</resources>
