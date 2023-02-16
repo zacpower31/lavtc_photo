@@ -139,7 +139,7 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
                 else {
                     if (view != null) {
                         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                        imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT);
                     }
                 }
             }
