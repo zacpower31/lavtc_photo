@@ -155,7 +155,7 @@ public class Gallery extends AppCompatActivity {
         @NonNull
         @Override
         public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(c).inflate(R.layout.recycleview_layout,parent,false);
+            View v = LayoutInflater.from(c).inflate(R.layout.galley_frame,parent,false);
             return new MyViewHolder(v);
         }
 
@@ -181,7 +181,6 @@ public class Gallery extends AppCompatActivity {
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.img_holder);
-            change = itemView.findViewById(R.id.delete);
             filePath = itemView.findViewById(R.id.uri);
 
 

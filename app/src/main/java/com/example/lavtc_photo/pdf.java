@@ -65,6 +65,7 @@ public class pdf extends AppCompatActivity {
         add_picture = findViewById(R.id.add_pdf_image);
         save_pdf = findViewById(R.id.save_pdf);
 
+        save_pdf.setVisibility(View.VISIBLE);
 
         refresh();
 
@@ -94,7 +95,7 @@ public class pdf extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.Q)
             @Override
             public void onClick(View view) {
-
+                save_pdf.setVisibility(View.INVISIBLE);
                 try {
                     SavePDF save = new SavePDF(pdf.this, getData(), file.getFilename(),false);
                     saveImages saveImages = new saveImages(getFilePath(),file.getFilename(),pdf.this,true);

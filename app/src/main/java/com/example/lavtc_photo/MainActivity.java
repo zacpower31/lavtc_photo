@@ -78,7 +78,9 @@ public class MainActivity extends AppCompatActivity  {
             public void onClick(View view) {
                 makeDirectories();
                 Intent intent = new Intent(MainActivity.this, com.example.lavtc_photo.camera.class);
+                Intent message = new Intent("Display image");
                 intent.putExtra("pdf",false);
+                sendBroadcast(message);
                 startActivity(intent);
             }
         });
@@ -98,7 +100,7 @@ public class MainActivity extends AppCompatActivity  {
                     case R.id.nav_driveSync:
                         drawerLayout.closeDrawer(GravityCompat.START);
                         try {
-                            Intent i = getPackageManager().getLaunchIntentForPackage("com.ttxapps.drivesync");
+                            Intent i = getPackageManager().getLaunchIntentForPackage("com.synology.dsdrive");
                             startActivity(i);
 
 

@@ -1,10 +1,15 @@
 package com.example.lavtc_photo;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageDecoder;
+import android.graphics.drawable.BitmapDrawable;
+import android.media.Image;
+import android.media.ImageReader;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -13,6 +18,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -29,6 +35,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
@@ -62,7 +69,7 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-       // getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_image_viewer);
 
 
@@ -89,6 +96,9 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
                     finish();
                     // DO WHATEVER YOU WANT.
                 }
+                else if(action.equals("Display image")){
+                    SetImage();
+                }
             }
         };
         registerReceiver(broadcastReceiver, new IntentFilter("finish_activity"));
@@ -105,14 +115,32 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 int text_length = file_name_editText.getEditText().getText().length();
                 if (text_length == 9 || text_length == 12){
+                    hideKeyboard(true);
                     filename_bool = true;
                     barcode_btn.setVisibility(View.INVISIBLE);
                     save_btn.setVisibility(View.VISIBLE);
                 }
                 else {
+                    hideKeyboard(false);
                     filename_bool = false;
                     barcode_btn.setVisibility(View.VISIBLE);
                     save_btn.setVisibility(View.INVISIBLE);
+                }
+            }
+
+            private void hideKeyboard(boolean p) {
+                View view = image_viewer.this.getCurrentFocus();
+                if (p) {
+                    if (view != null) {
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                    }
+                }
+                else {
+                    if (view != null) {
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                    }
                 }
             }
 
@@ -212,12 +240,15 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
         SetImage();
     }
 
+
     private void SetImage(){
+
         img_view = findViewById(R.id.image_view);
         try {
-            img_view.setImageBitmap(BitmapFactory.decodeFile(getFilePath()));
-
-            }catch (Exception ex){}
+            Glide.with(this).load(BitmapDrawable.createFromPath(getFilePath())).into(img_view);
+            }catch (Exception ex){
+            Toast.makeText(this, ex.getMessage(), Toast.LENGTH_SHORT).show();
+        }
         }
 
 

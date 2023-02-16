@@ -84,6 +84,7 @@ public class camera extends AppCompatActivity {
         layout = findViewById(R.id.layer);
         zoom = findViewById(R.id.zoomBar);
 
+        bTakePicture.setVisibility(View.VISIBLE);
 
         zoom.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -107,6 +108,7 @@ public class camera extends AppCompatActivity {
         bTakePicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                bTakePicture.setVisibility(View.INVISIBLE);
                 capturePhoto();
             }
         });
@@ -187,6 +189,7 @@ public class camera extends AppCompatActivity {
                     try {
                         saveImageLocation(image.getAbsolutePath());
                         Intent intent = new Intent(camera.this, image_viewer.class);
+                        intent.putExtra("file_path",image.getAbsolutePath());
                         startActivity(intent);
                         finish();
 
