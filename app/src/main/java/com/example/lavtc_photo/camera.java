@@ -24,9 +24,11 @@ import androidx.lifecycle.LiveData;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -44,6 +46,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
@@ -71,9 +74,9 @@ public class camera extends AppCompatActivity {
 
     SeekBar zoom;
 
+    savefile _savefile;
 
-
-
+    pdf pdf;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,7 +88,36 @@ public class camera extends AppCompatActivity {
         zoom = findViewById(R.id.zoomBar);
 
         bTakePicture.setVisibility(View.VISIBLE);
+        zoom.setVisibility(View.VISIBLE);
 
+
+        BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if(action == "PDF_SAVE"){
+                   _savefile = pdf._savefile;
+                }
+            }
+        };
+        registerReceiver(broadcastReceiver,new IntentFilter("PDF_SAVE"));
+
+
+
+
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+
+        cameraProviderFuture.addListener(() -> {
+            try {
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                startCameraX(cameraProvider);
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }, getExecutor());
         zoom.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -108,27 +140,11 @@ public class camera extends AppCompatActivity {
         bTakePicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                zoom.setVisibility(View.INVISIBLE);
                 bTakePicture.setVisibility(View.INVISIBLE);
                 capturePhoto();
             }
         });
-
-        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-
-        cameraProviderFuture.addListener(() -> {
-            try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                startCameraX(cameraProvider);
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-        }, getExecutor());
-
-
-
     }
 
     private Executor getExecutor() {
@@ -165,6 +181,7 @@ public class camera extends AppCompatActivity {
     }
 
     private void capturePhoto() {
+        Snackbar.make(camera.this, findViewById(R.id.layer),"Processing....",Snackbar.LENGTH_SHORT).show();
         boolean pdf_bool = getIntent().getBooleanExtra("pdf",false);
 
         File directory;
@@ -192,12 +209,15 @@ public class camera extends AppCompatActivity {
                         intent.putExtra("file_path",image.getAbsolutePath());
                         startActivity(intent);
                         finish();
-
                     }
                     catch (Exception ex){}
 
                 }
                 else {
+                   // Intent message = new Intent("PDF_SAVE");
+                   // message.putExtra("path",image.getAbsolutePath());
+                    //sendBroadcast(message);
+                    _savefile.setFilename(image.getAbsolutePath());
                     finish();
                 }
             }
