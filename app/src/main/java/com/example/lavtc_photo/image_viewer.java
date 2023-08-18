@@ -10,6 +10,7 @@ import android.graphics.ImageDecoder;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.wifi.ScanResult;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -25,6 +26,8 @@ import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -49,13 +52,16 @@ import java.util.Scanner;
 import java.util.Set;
 
 import com.google.zxing.aztec.decoder.Decoder;
+import com.google.zxing.client.android.Intents;
 import com.google.zxing.qrcode.QRCodeReader;
 
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
 
 
-public class image_viewer extends AppCompatActivity implements View.OnClickListener {
+public class image_viewer extends AppCompatActivity{
 
     ImageView img_view ;
     TextInputLayout file_name_editText;
@@ -63,7 +69,6 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
     Switch pdf_switch;
     Toolbar toolbar;
     CoordinatorLayout layout;
-    boolean filename_bool;
 
 
     @Override
@@ -80,10 +85,6 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
         layout = findViewById(R.id.layout);
         toolbar = findViewById(R.id.toolbar);
 
-        barcode_btn.setOnClickListener(this);
-        save_btn.setOnClickListener(this);
-        change.setOnClickListener(this);
-
         pdf_switch = findViewById(R.id.pdf_switch);
 
 
@@ -94,7 +95,6 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
                 String action = intent.getAction();
                 if (action.equals("finish_activity")) {
                     finish();
-                    // DO WHATEVER YOU WANT.
                 }
                 else if(action.equals("Display image")){
                     SetImage();
@@ -114,15 +114,17 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 int text_length = file_name_editText.getEditText().getText().length();
-                if (text_length == 9 || text_length == 12){
+                if (text_length == 9){
+                    barcode_btn.setVisibility(View.INVISIBLE);
+                    save_btn.setVisibility(View.VISIBLE);
+                }
+                else if(text_length == 12){
                     hideKeyboard(true);
-                    filename_bool = true;
                     barcode_btn.setVisibility(View.INVISIBLE);
                     save_btn.setVisibility(View.VISIBLE);
                 }
                 else {
                     hideKeyboard(false);
-                    filename_bool = false;
                     barcode_btn.setVisibility(View.VISIBLE);
                     save_btn.setVisibility(View.INVISIBLE);
                 }
@@ -151,9 +153,17 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
         });
 
         pdf_switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @RequiresApi(api = Build.VERSION_CODES.Q)
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (b && filename_bool){
+                int text_length = file_name_editText.getEditText().getText().length();
+                if (b && (text_length == 9 || text_length == 12)){
+                    try {
+                        saveImages saveImages = new saveImages(getFilePath(), file_name_editText.getEditText().getText().toString(), image_viewer.this, false);
+                    }
+                    catch (Exception ex){
+
+                    }
                     Intent intent = new Intent(image_viewer.this, pdf.class);
                     intent.putExtra("filename",file_name_editText.getEditText().getText().toString());
                     startActivity(intent);
@@ -178,6 +188,39 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
                 finish();
             }
         });
+
+        save_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+               try {
+                    saveImages saveImages = new saveImages(getFilePath(),file_name_editText.getEditText().getText().toString(),image_viewer.this,false);
+                }catch (Exception ex){
+                    Toast.makeText(image_viewer.this, ex.getMessage().toString(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        barcode_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ScanOptions options = new ScanOptions();
+                options.setDesiredBarcodeFormats(ScanOptions.ALL_CODE_TYPES);
+                options.setPrompt("Scan a barcode");
+                options.setCameraId(0);
+                options.setBeepEnabled(false);
+                options.setOrientationLocked(false);
+                barcodeLauncher.launch(options);
+            }
+        });
+
+        change.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(image_viewer.this,camera.class);
+                startActivity(intent);
+                finish();
+            }
+        });
     }
 
 
@@ -189,50 +232,16 @@ public class image_viewer extends AppCompatActivity implements View.OnClickListe
         return scanner.nextLine();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    @Override
-    public void onClick(View view)  {
-        switch (view.getId()){
-            case R.id.save:
-                try {
-                    saveImages saveImages = new saveImages(getFilePath(),file_name_editText.getEditText().getText().toString(),this,false);
-                }catch (Exception ex){}
-                break;
 
-            case R.id.barcode:
-                IntentIntegrator intentIntegrator = new IntentIntegrator(this);
-                intentIntegrator.setPrompt("Scan a barcode or QR Code");
-                intentIntegrator.setOrientationLocked(true);
-                intentIntegrator.initiateScan();
-                break;
-
-            case R.id.change:
-                Intent intent = new Intent(image_viewer.this,camera.class);
-                startActivity(intent);
-                finish();
-                break;
-            default:
-                break;
-        }
-
-
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        IntentResult intentResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-
-        if (intentResult != null) {
-            if (intentResult.getContents() == null) {
-                Toast.makeText(getBaseContext(), "Cancelled", Toast.LENGTH_SHORT).show();
-            } else {
-                file_name_editText.getEditText().setText(intentResult.getContents().toString());
-            }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
-    }
+    private final ActivityResultLauncher<ScanOptions> barcodeLauncher = registerForActivityResult(new ScanContract(),
+            result -> {
+                if(result.getContents() == null) {
+                    Snackbar.make(image_viewer.this,layout,"Cancelled",Snackbar.LENGTH_SHORT).show();
+                } else {
+                    file_name_editText.getEditText().setText(result.getContents().toString());
+                    Snackbar.make(image_viewer.this,layout,"Scanned",Snackbar.LENGTH_SHORT).show();
+                }
+            });
 
     @Override
     protected void onResume() {

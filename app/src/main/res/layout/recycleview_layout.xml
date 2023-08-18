@@ -21,7 +21,7 @@
         <ImageView
             android:id="@+id/img_holder"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="150dp"/>
         <TextView
             android:visibility="invisible"
             android:id="@+id/uri"

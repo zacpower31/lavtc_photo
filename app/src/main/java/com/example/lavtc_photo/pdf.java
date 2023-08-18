@@ -4,12 +4,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -20,7 +24,9 @@ import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Environment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,7 +47,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -53,10 +61,13 @@ import org.w3c.dom.Text;
 
 public class pdf extends AppCompatActivity {
 
-    FloatingActionButton add_picture,save_pdf;
+    FloatingActionButton add_picture;
+    MaterialButton save_pdf;
     androidx.appcompat.widget.Toolbar toolbar;
     pdf.filename file = new filename();
+    CoordinatorLayout layout;
 
+    ArrayList<String> images_paths;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,10 +75,12 @@ public class pdf extends AppCompatActivity {
 
         add_picture = findViewById(R.id.add_pdf_image);
         save_pdf = findViewById(R.id.save_pdf);
-
         save_pdf.setVisibility(View.VISIBLE);
 
-        refresh();
+        try{refresh();} catch (Exception ex){}
+        file.setFilename(getIntent().getStringExtra("filename"));
+        images_paths = new ArrayList<String>();
+        images_paths.clear();
 
         toolbar =  findViewById(R.id.toolbar);
         toolbar.setTitle("Lavtc Photo App");
@@ -80,8 +93,6 @@ public class pdf extends AppCompatActivity {
                 ClearDirectories clear = new ClearDirectories(pdf.this,getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
             }
         });
-
-
         add_picture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -95,21 +106,23 @@ public class pdf extends AppCompatActivity {
             @RequiresApi(api = Build.VERSION_CODES.Q)
             @Override
             public void onClick(View view) {
+                Snackbar.make(pdf.this,findViewById(R.id.ref_layer),"Saving pdf",Snackbar.LENGTH_SHORT).show();
+                Toast.makeText(pdf.this, "Saving", Toast.LENGTH_SHORT).show();
                 save_pdf.setVisibility(View.INVISIBLE);
                 try {
                     SavePDF save = new SavePDF(pdf.this, getData(), file.getFilename(),false);
-                    saveImages saveImages = new saveImages(getFilePath(),file.getFilename(),pdf.this,true);
 
                 }catch (Exception exception){
                     Toast.makeText(pdf.this, exception.getMessage(), Toast.LENGTH_SHORT).show();
                 }
+                //Toast.makeText(pdf.this,""+ images_paths.size()+"", Toast.LENGTH_SHORT).show();
             }
         });
 
 
     }
 
-    private ArrayList<Image> getData() {
+    private ArrayList<Image> getData() throws Exception{
         ArrayList<Image> images = new ArrayList<>();
         File downloadsFolder = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
 
@@ -117,10 +130,18 @@ public class pdf extends AppCompatActivity {
 
         if (downloadsFolder.exists()){
 
-            File[] files = downloadsFolder.listFiles();
+            /*File[] files = downloadsFolder.listFiles();
 
             for (int i = 0;i<files.length;i++){
                 File file = files[i];
+                s = new Image();
+                s.setFilename(file.getName());
+                s.setUri(Uri.fromFile(file));
+                images.add(s);
+            }*/
+
+            for (int i = 0;i<images_paths.size();i++){
+                File file = new File(images_paths.get(i));
                 s = new Image();
                 s.setFilename(file.getName());
                 s.setUri(Uri.fromFile(file));
@@ -192,9 +213,11 @@ public class pdf extends AppCompatActivity {
     private void DeleteFile(String filename) {
         File file = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf/"+filename);
         if (file.exists()){
-            Toast.makeText(this, "exist", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "exist", Toast.LENGTH_SHORT).show();
             file.delete();
-            refresh();
+            images_paths.remove(images_paths.indexOf(file.getAbsolutePath()));
+            //as();
+            try{refresh();} catch (Exception ex){}
         }
         else {
             Toast.makeText(this, "no", Toast.LENGTH_SHORT).show();
@@ -204,25 +227,30 @@ public class pdf extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        refresh();
+        //Toast.makeText(this, _savefile.getFilename(), Toast.LENGTH_SHORT).show();
+       try {
+            images_paths.add(getFilePath());
+            Toast.makeText(this, getFilePath().toString(), Toast.LENGTH_SHORT).show();
+           // as();
+        }catch (Exception ex){}
+
+        try{refresh();} catch (Exception ex){}
     }
 
 
-    private void refresh(){
-        String file_name = getIntent().getStringExtra("filename");
-
-        if (file_name != null){
-            file.setFilename(file_name);
-
-        }
-
+    private void refresh() throws Exception{
         RecyclerView recyclerView = findViewById(R.id.view_recycle);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(new RecycleView_Adapter(pdf.this, getData()));
 
+        if(images_paths.size() > 0) {save_pdf.setVisibility(View.VISIBLE);}
+        else {save_pdf.setVisibility(View.INVISIBLE);}
+
     }
 
-
+    private void as(){
+        Toast.makeText(this, images_paths.size(), Toast.LENGTH_SHORT).show();
+    }
 
     public class  filename{
         private String filename;
@@ -246,8 +274,9 @@ public class pdf extends AppCompatActivity {
 
 
     private String getFilePath() throws IOException {
-        File  file = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath()).getAbsolutePath() + "/path_image.txt");
+        File  file = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath()).getAbsolutePath() + "/path_image_pdf.txt");
         Scanner scanner  = new Scanner(file);
+        file.delete();
         return scanner.nextLine();
     }
 }

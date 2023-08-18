@@ -22,12 +22,11 @@ public class saveImages {
     Activity activity;
     boolean jpg_instance_finalize,photo_instance_finalize;
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
+
     public saveImages(String file_path,String filename,Activity c,boolean pdf) throws  IOException{
         this.activity = c;
 
          File source = new File(file_path);
-         saveImageInPhoto(source,filename,activity,pdf);
          saveImageInLavtc(source,filename,activity,pdf);
 
          jpg_instance_finalize =false;
@@ -36,7 +35,7 @@ public class saveImages {
 
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
+
     private void saveImageInLavtc(File source, String filename ,Activity c,boolean pdf) throws IOException {
 
 
@@ -63,36 +62,8 @@ public class saveImages {
         finilize(c,pdf);
     }
 
-
-
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    private void saveImageInPhoto(File source, String filename,Activity c,boolean pdf) throws IOException {
-        File target = new File(activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath()+"/"+filename+".jpg");
-        InputStream  inputStream = null;
-        OutputStream outputStream = null;
-        if (source.exists()) {
-            try {
-              inputStream = new FileInputStream(source);
-                outputStream = new FileOutputStream(target);
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = inputStream.read(buffer)) > 0) {
-                    outputStream.write(buffer, 0, length);
-                }
-            } finally {
-                inputStream.close();
-                outputStream.close();
-                photo_instance_finalize =true;
-            }
-
-        }
-
-        finilize(c,pdf);
-    }
-
-
     private void finilize(Activity c,boolean pdf) {
-        if (photo_instance_finalize&&jpg_instance_finalize&&!pdf){
+        if (!pdf){
             ClearDirectories clear = new ClearDirectories(c,c.getExternalFilesDir(Environment.MEDIA_BAD_REMOVAL).getAbsolutePath());
             c.finish();
         }

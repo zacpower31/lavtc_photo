@@ -32,7 +32,8 @@ import java.util.ArrayList;
 
 public class I_Center extends AppCompatActivity {
 
-    FloatingActionButton add_picture,save_pdf;
+    FloatingActionButton add_picture;
+    MaterialButton save_pdf;
     androidx.appcompat.widget.Toolbar toolbar;
 
     @Override
