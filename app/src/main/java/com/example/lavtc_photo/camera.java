@@ -74,7 +74,7 @@ public class camera extends AppCompatActivity {
 
     SeekBar zoom;
 
-    savefile _savefile;
+
 
     pdf pdf;
     @Override
@@ -89,21 +89,6 @@ public class camera extends AppCompatActivity {
 
         bTakePicture.setVisibility(View.VISIBLE);
         zoom.setVisibility(View.VISIBLE);
-
-
-        BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                String action = intent.getAction();
-                if(action == "PDF_SAVE"){
-                   _savefile = pdf._savefile;
-                }
-            }
-        };
-        registerReceiver(broadcastReceiver,new IntentFilter("PDF_SAVE"));
-
-
-
 
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
 
@@ -204,7 +189,7 @@ public class camera extends AppCompatActivity {
 
                 if (!pdf_bool) {
                     try {
-                        saveImageLocation(image.getAbsolutePath());
+                        saveImageLocation(image.getAbsolutePath(),false);
                         Intent intent = new Intent(camera.this, image_viewer.class);
                         intent.putExtra("file_path",image.getAbsolutePath());
                         startActivity(intent);
@@ -217,8 +202,12 @@ public class camera extends AppCompatActivity {
                    // Intent message = new Intent("PDF_SAVE");
                    // message.putExtra("path",image.getAbsolutePath());
                     //sendBroadcast(message);
-                    _savefile.setFilename(image.getAbsolutePath());
-                    finish();
+                    try {
+                        saveImageLocation(image.getAbsolutePath(),true);
+                        finish();
+                    }catch (Exception ex) {
+                        Toast.makeText(pdf, ex.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
             @Override
@@ -229,9 +218,14 @@ public class camera extends AppCompatActivity {
 
     }
 
-    private void saveImageLocation(String path) throws IOException {
-
-        File file = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath()).getAbsolutePath() + "/path_image.txt");
+    private void saveImageLocation(String path,boolean pdf) throws IOException {
+        File file;
+        if(!pdf){
+            file = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath()).getAbsolutePath() + "/path_image.txt");
+        }
+        else {
+            file = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath()).getAbsolutePath() + "/path_image_pdf.txt");
+        }
         FileWriter writer = new FileWriter(file.getAbsolutePath());
         writer.write(path);
         writer.close();

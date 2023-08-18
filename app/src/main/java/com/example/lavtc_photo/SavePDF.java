@@ -17,18 +17,25 @@ import androidx.camera.core.processing.SurfaceProcessorNode;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class SavePDF {
 
     public SavePDF (Activity activity , ArrayList<Image> images,String filename,boolean i_center) throws IOException {
-       SavePDF(activity,images,filename,i_center);
+        String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
+        File pdf_file = new File(Environment.getExternalStorageDirectory().toString() + "/id/PDF/"+date);
+        if (!pdf_file.mkdir()) {
+            pdf_file.mkdir();
+        }
+        SavePDF(activity,images,filename,i_center,date);
     }
 
 
 
 
-    private void SavePDF(Activity c,ArrayList<Image> images,String fileName,boolean i_center) throws IOException {
+    private void SavePDF(Activity c,ArrayList<Image> images,String fileName,boolean i_center,String date) throws IOException {
         File target;
         PdfDocument document = new PdfDocument();
         String sdCard = c.getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath()).getAbsolutePath();
@@ -37,7 +44,7 @@ public class SavePDF {
             target = new File(Environment.getExternalStorageDirectory().toString() + "/I-Center/" + fileName + ".pdf");
         }
         else {
-            target = new File(Environment.getExternalStorageDirectory().toString() + "/id/PDF/" + fileName + ".pdf");
+            target = new File(Environment.getExternalStorageDirectory().toString() + "/id/PDF/"+date+"/"+ fileName + ".pdf");
         }
         FileOutputStream fos = new FileOutputStream(target);
 

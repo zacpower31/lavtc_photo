@@ -1,5 +1,7 @@
 package com.example.lavtc_photo;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.GravityInt;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -31,6 +33,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
@@ -48,7 +51,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-
 public class MainActivity extends AppCompatActivity  {
 
     FloatingActionButton camera;
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity  {
     View header;
     ImageView imageView;
 
-
+    String[]pending_permissions;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +74,9 @@ public class MainActivity extends AppCompatActivity  {
 
         checkForPermissions();
         setNavigationView();
+
+
+        
 
         camera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,7 +130,6 @@ public class MainActivity extends AppCompatActivity  {
         });
 
     }
-
     private void setNavigationView() {
         drawerLayout = findViewById(R.id.drawer_layout);
         toolbar = findViewById( R.id.toolbar);
@@ -164,18 +168,38 @@ public class MainActivity extends AppCompatActivity  {
         String manifest_camera = Manifest.permission.CAMERA;
         String manifest_write_data = Manifest.permission.WRITE_EXTERNAL_STORAGE;
         String manifest_read_data = Manifest.permission.READ_EXTERNAL_STORAGE;
+        String manifest_manage_data = Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 
 
-        String[]permissions = {manifest_camera,manifest_read_data,manifest_write_data};
-        ActivityCompat.requestPermissions(MainActivity.this,permissions,1);
 
 
+        if(Build.VERSION.SDK_INT >= 30){
+            Toast.makeText(this, "Android 11", Toast.LENGTH_SHORT).show();
+            pending_permissions = new String[]{manifest_camera, manifest_write_data, manifest_manage_data};
+        }
+        else {
+            pending_permissions = new String[]{manifest_camera, manifest_read_data, manifest_write_data};
+        }
+        //ActivityCompat.requestPermissions(MainActivity.this,permissions,1);
+
+
+        requestPermissionLauncher.launch(pending_permissions);
 
     }
 
+    private ActivityResultLauncher<String[]> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), isGranted ->{
+
+    });
+
     private void makeDirectories(){
         String sdCard = Environment.getExternalStorageDirectory().toString();
-        final File file = new File(sdCard + "/id/");
+
+        File a = new File(getExternalFilesDir(Environment.DIRECTORY_ALARMS),"hell");
+        if(!a.mkdir()){
+            a.mkdir();
+        }
+
+         File file = new File(sdCard + "/id/");
         if (!file.mkdir()) {
             file.mkdir();
         }
