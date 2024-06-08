@@ -1,5 +1,7 @@
 package com.example.lavtc_photo;
 
+import static com.example.lavtc_photo.DataReference.Data.Process.*;
+import static  com.example.lavtc_photo.DataReference.*;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -9,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.pdf.PdfDocument;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -21,36 +24,25 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import com.example.lavtc_photo.DataReference.Data.Process;
 public class SavePDF {
 
-    public SavePDF (Activity activity , ArrayList<Image> images,String filename,boolean i_center) throws IOException {
-        String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
-        File pdf_file = new File(Environment.getExternalStorageDirectory().toString() + "/id/PDF/"+date);
-        if (!pdf_file.mkdir()) {
-            pdf_file.mkdir();
-        }
-        SavePDF(activity,images,filename,i_center,date);
-    }
+    public static void save_pdf(Activity c,DataReference.Data.Process process,ArrayList<Image> list) throws  Exception{
+        Log.d("CUSTOM",""+process+"");
 
-
-
-
-    private void SavePDF(Activity c,ArrayList<Image> images,String fileName,boolean i_center,String date) throws IOException {
-        File target;
+        String ROOT = Environment.getExternalStorageDirectory().toString();
+        String date  = new SimpleDateFormat("yyyyMMdd").format(new Date());
         PdfDocument document = new PdfDocument();
-        String sdCard = c.getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath()).getAbsolutePath();
+        File temp_dir = new File(ROOT+ "/id/PDF/"+date);
+        if(!temp_dir.mkdir()){ temp_dir.mkdir();}
 
-        if (i_center) {
-            target = new File(Environment.getExternalStorageDirectory().toString() + "/I-Center/" + fileName + ".pdf");
-        }
-        else {
-            target = new File(Environment.getExternalStorageDirectory().toString() + "/id/PDF/"+date+"/"+ fileName + ".pdf");
-        }
+        File target = new File( (process == ICENTER)? ROOT+"/I-Center/" + getData().FILE_NAME + ".pdf":
+                                (process == PDF)? ROOT+"/id/PDF/"+date+"/"+ getData().FILE_NAME + ".pdf": "");
+
         FileOutputStream fos = new FileOutputStream(target);
 
-        for (int n = 0 ; n < images.size() ; n++){
-
-            Bitmap bitmap = BitmapFactory.decodeFile(images.get(n).getUri().getPath());
+        for (int n = 0 ; n < list.size() ; n++){
+            Bitmap bitmap = BitmapFactory.decodeFile(list.get(n).getUri().getPath());
             Bitmap resized_bitmap = Bitmap.createScaledBitmap(bitmap,793,1122,true);
             // Bitmap rotated_bitmap = rotateBitmap(resized_bitmap,images.get(n).getUri());
             PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(resized_bitmap.getWidth(), resized_bitmap.getHeight(), (n + 1)).create();
@@ -67,32 +59,22 @@ public class SavePDF {
         document.writeTo(fos);
         document.close();
 
-        String downloadsFolder = c.getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf";
-        ClearDirectories clear = new ClearDirectories(c,downloadsFolder);
-
-        returnToactivity(i_center,c);
-
+        exit(c,process);
     }
-
-    private void returnToactivity(boolean i_center,Activity c) {
-        if (i_center){
-            pdf_save_dialogbox dialogbox = new pdf_save_dialogbox(c,null);
-            dialogbox.hide();
+    private static  void exit(Activity c,Process process){
+        ClearDirectories.Clear(c,c.getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
+        if(process == ICENTER){
+            pdf_save_dialogbox dialog_box = new pdf_save_dialogbox(c,null);
+            dialog_box.hide();
             Intent intent = new Intent(c,MainActivity.class);
             c.startActivity(intent);
             c.finish();
-
         }
         else {
-            Intent intent = new Intent(c,MainActivity.class);
-            Intent intent_broadcast = new Intent("finish_activity");
-            c.sendBroadcast(intent_broadcast);
-            c.startActivity(intent);
             c.finish();
-
         }
-
     }
+
 
 }
 

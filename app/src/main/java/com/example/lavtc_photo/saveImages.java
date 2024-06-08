@@ -1,5 +1,7 @@
 package com.example.lavtc_photo;
 
+import  static  com.example.lavtc_photo.DataReference.*;
+
 import android.app.Activity;
 import android.os.Build;
 import android.os.Environment;
@@ -22,60 +24,37 @@ import java.util.Date;
 
 public class saveImages {
     Activity activity;
-    boolean jpg_instance_finalize,photo_instance_finalize;
 
-
-    public saveImages(String file_path,String filename,Activity c,boolean pdf) throws  IOException{
-        this.activity = c;
-
+    public static void save_Images(Activity c) throws Exception{
+        String ROOT = Environment.getExternalStorageDirectory().toString();
         String date = new SimpleDateFormat("yyyyMMdd").format(new Date());
-        File pdf_file = new File(Environment.getExternalStorageDirectory().toString()+ "/id/JPG/"+date);
-        if (!pdf_file.mkdir()) {
-            pdf_file.mkdir();
-        }
-        File source = new File(file_path);
-        saveImageInLavtc(source,filename,activity,pdf,date);
+        File temp_dir = new File(ROOT+ "/id/JPG/"+date);
 
-        jpg_instance_finalize =false;
-        photo_instance_finalize = false;
+        if(!temp_dir.mkdir()){ temp_dir.mkdir();}
 
+        File source = new File(getData().FILE_PATH);
+        if(!source.exists()) return;
+        File target = new File(ROOT+ "/id/JPG/"+date+"/"+getData().FILE_NAME+".jpg");
 
-    }
-
-
-    private void saveImageInLavtc(File source, String filename ,Activity c,boolean pdf,String date) throws IOException {
-
-
-        File target = new File(Environment.getExternalStorageDirectory().toString()+ "/id/JPG/"+date+"/"+filename+".jpg");
         InputStream  inputStream = null;
         OutputStream outputStream = null;
-        if (source.exists()) {
-            try {
-                inputStream = new FileInputStream(source);
-                outputStream = new FileOutputStream(target);
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = inputStream.read(buffer)) > 0) {
-                    outputStream.write(buffer, 0, length);
-                }
-            } finally {
-                inputStream.close();
-                outputStream.close();
-                jpg_instance_finalize =true;
-            }
 
+        inputStream = new FileInputStream(source);
+        outputStream = new FileOutputStream(target);
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = inputStream.read(buffer)) > 0) {
+            outputStream.write(buffer, 0, length);
         }
+        inputStream.close();
+        outputStream.close();
 
-        finilize(c,pdf);
+        exit(c);
+
+    }
+    private static  void exit(Activity c){
+        ClearDirectories.Clear(c,c.getExternalFilesDir(Environment.MEDIA_BAD_REMOVAL).getAbsolutePath());
+        c.finish();
     }
 
-    private void finilize(Activity c,boolean pdf) {
-        if (!pdf){
-            ClearDirectories clear = new ClearDirectories(c,c.getExternalFilesDir(Environment.MEDIA_BAD_REMOVAL).getAbsolutePath());
-            c.finish();
-        }
-        else {
-
-        }
-    }
 }

@@ -1,62 +1,36 @@
 package com.example.lavtc_photo;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import static com.example.lavtc_photo.DataReference.Data;
+import static com.example.lavtc_photo.DataReference.getData;
 
-import android.app.Activity;
-import android.app.Notification;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Environment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.textfield.TextInputLayout;
-
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.logging.Logger;
-
-
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import org.w3c.dom.Text;
+import java.util.Map;
 
 
 public class pdf extends AppCompatActivity {
@@ -66,8 +40,8 @@ public class pdf extends AppCompatActivity {
     androidx.appcompat.widget.Toolbar toolbar;
     pdf.filename file = new filename();
     CoordinatorLayout layout;
+    Image temp_image_file;
 
-    ArrayList<String> images_paths;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,10 +51,8 @@ public class pdf extends AppCompatActivity {
         save_pdf = findViewById(R.id.save_pdf);
         save_pdf.setVisibility(View.VISIBLE);
 
-        try{refresh();} catch (Exception ex){}
-        file.setFilename(getIntent().getStringExtra("filename"));
-        images_paths = new ArrayList<String>();
-        images_paths.clear();
+        getData().PDF_Paths_List.clear();
+        getData().setProcess(Data.Process.PDF);
 
         toolbar =  findViewById(R.id.toolbar);
         toolbar.setTitle("Lavtc Photo App");
@@ -89,73 +61,38 @@ public class pdf extends AppCompatActivity {
         toolbar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
-                ClearDirectories clear = new ClearDirectories(pdf.this,getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
+                Intent intent = new Intent(pdf.this,image_viewer.class);
+                startActivity(intent);
+                ClearDirectories.Clear(pdf.this,getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
             }
         });
         add_picture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                getData().setImageType(Data.Image_type.PDF);
                 Intent intent = new Intent(pdf.this,camera.class);
-                intent.putExtra("pdf",true);
                 startActivity(intent);
             }
         });
-
         save_pdf.setOnClickListener(new View.OnClickListener() {
             @RequiresApi(api = Build.VERSION_CODES.Q)
             @Override
             public void onClick(View view) {
                 Snackbar.make(pdf.this,findViewById(R.id.ref_layer),"Saving pdf",Snackbar.LENGTH_SHORT).show();
-                Toast.makeText(pdf.this, "Saving", Toast.LENGTH_SHORT).show();
                 save_pdf.setVisibility(View.INVISIBLE);
                 try {
-                    SavePDF save = new SavePDF(pdf.this, getData(), file.getFilename(),false);
+                    SavePDF.save_pdf( pdf.this, Data.Process.PDF,getViewList());
+                    saveImages.save_Images(pdf.this);
 
                 }catch (Exception exception){
                     Toast.makeText(pdf.this, exception.getMessage(), Toast.LENGTH_SHORT).show();
                 }
-                //Toast.makeText(pdf.this,""+ images_paths.size()+"", Toast.LENGTH_SHORT).show();
             }
         });
 
 
     }
-
-    private ArrayList<Image> getData() throws Exception{
-        ArrayList<Image> images = new ArrayList<>();
-        File downloadsFolder = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
-
-        Image s;
-
-        if (downloadsFolder.exists()){
-
-            /*File[] files = downloadsFolder.listFiles();
-
-            for (int i = 0;i<files.length;i++){
-                File file = files[i];
-                s = new Image();
-                s.setFilename(file.getName());
-                s.setUri(Uri.fromFile(file));
-                images.add(s);
-            }*/
-
-            for (int i = 0;i<images_paths.size();i++){
-                File file = new File(images_paths.get(i));
-                s = new Image();
-                s.setFilename(file.getName());
-                s.setUri(Uri.fromFile(file));
-                images.add(s);
-            }
-
-        }
-        return images;
-    }
-
-
     public class RecycleView_Adapter extends RecyclerView.Adapter<MyViewHolder>{
-
-
         Context c;
         ArrayList<Image> images;
 
@@ -174,7 +111,7 @@ public class pdf extends AppCompatActivity {
         @Override
         public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
             Image image = images.get(position);
-            holder.filename.setText(image.getFilename());
+            holder.index.setText(image.getIndex());
             Glide.with(c).load(image.getUri()).into(holder.imageView);
 
         }
@@ -189,67 +126,72 @@ public class pdf extends AppCompatActivity {
 
         ImageView imageView;
         MaterialButton delete;
-        TextView filename;
+        TextView index;
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.img_holder);
             delete = itemView.findViewById(R.id.delete);
-            filename = itemView.findViewById(R.id.uri);
+            index = itemView.findViewById(R.id.uri);
 
 
             delete.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    DeleteFile(filename.getText().toString());
+                    DeleteFile(index.getText().toString());
 
                 }
             });
 
         }
-
-
     }
 
-    private void DeleteFile(String filename) {
-        File file = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf/"+filename);
-        if (file.exists()){
-            //Toast.makeText(this, "exist", Toast.LENGTH_SHORT).show();
+    private void DeleteFile(String index) {
+        File file = new File(getData().PDF_Paths_List.get(index));
+        if(file.exists()){
             file.delete();
-            images_paths.remove(images_paths.indexOf(file.getAbsolutePath()));
-            //as();
-            try{refresh();} catch (Exception ex){}
-        }
-        else {
-            Toast.makeText(this, "no", Toast.LENGTH_SHORT).show();
+            getData().PDF_Paths_List.remove(index);
+            reloadView();
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        //Toast.makeText(this, _savefile.getFilename(), Toast.LENGTH_SHORT).show();
-       try {
-            images_paths.add(getFilePath());
-            Toast.makeText(this, getFilePath().toString(), Toast.LENGTH_SHORT).show();
-           // as();
-        }catch (Exception ex){}
-
-        try{refresh();} catch (Exception ex){}
+        reloadView();
     }
 
+    private void reloadView(){
+        if (!getData().PDF_Paths_List.isEmpty()) { save_pdf.setVisibility(View.VISIBLE); }
+        else { save_pdf.setVisibility(View.INVISIBLE); }
 
-    private void refresh() throws Exception{
+        if(getData().PDF_PATH != null) { getData().setPDF_Path(getData().PDF_PATH);}
+        if(getData().PDF_Paths_List.isEmpty()) { return; }
+        getData().setPDF_PATH(null);
+
         RecyclerView recyclerView = findViewById(R.id.view_recycle);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(new RecycleView_Adapter(pdf.this, getData()));
-
-        if(images_paths.size() > 0) {save_pdf.setVisibility(View.VISIBLE);}
-        else {save_pdf.setVisibility(View.INVISIBLE);}
-
+        recyclerView.setAdapter(new RecycleView_Adapter(pdf.this, getViewList()));
     }
 
-    private void as(){
-        Toast.makeText(this, images_paths.size(), Toast.LENGTH_SHORT).show();
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        ClearDirectories.Clear(pdf.this,getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
+        finish();
+    }
+
+    private ArrayList<Image> getViewList(){
+       ArrayList<Image> temp_list = new ArrayList<>();
+        for (Map.Entry<String,String> data: getData().PDF_Paths_List.entrySet()) {
+            File temp = new File(data.getValue());
+            temp_image_file = new Image();
+            temp_image_file.setFilename(temp.getName());
+            temp_image_file.setIndex(data.getKey());
+            temp_image_file.setUri(Uri.fromFile(temp));
+            temp_list.add(temp_image_file);
+        }
+
+        return  (!temp_list.isEmpty())?temp_list:new ArrayList<>();
     }
 
     public class  filename{
@@ -263,21 +205,6 @@ public class pdf extends AppCompatActivity {
             this.filename = filename;
         }
 
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        ClearDirectories clear = new ClearDirectories(pdf.this,getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
-        finish();
-    }
-
-
-    private String getFilePath() throws IOException {
-        File  file = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath()).getAbsolutePath() + "/path_image_pdf.txt");
-        Scanner scanner  = new Scanner(file);
-        file.delete();
-        return scanner.nextLine();
     }
 }
 

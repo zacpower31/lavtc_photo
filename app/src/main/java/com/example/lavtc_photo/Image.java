@@ -4,7 +4,7 @@ import android.net.Uri;
 
 public class Image {
 
-
+    private String index;
     private String filename;
     private Uri uri;
 
@@ -23,5 +23,10 @@ public class Image {
 
     public void setUri(Uri uri) {
         this.uri = uri;
+    }
+
+    public void setIndex(String index) { this.index = index; }
+    public String getIndex() {
+        return index;
     }
 }

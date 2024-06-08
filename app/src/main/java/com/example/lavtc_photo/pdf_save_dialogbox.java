@@ -63,7 +63,8 @@ public class pdf_save_dialogbox extends Dialog implements View.OnClickListener {
         switch (view.getId()){
             case R.id.save:
                 try {
-                    SavePDF save = new SavePDF(c, images, filename.getEditText().getText().toString(),true);
+                    DataReference.getData().setFILE_NAME(filename.getEditText().getText().toString());
+                    SavePDF.save_pdf(c, DataReference.Data.Process.ICENTER,images);
                 } catch (Exception ex) {
                 }
                 break;

@@ -6,7 +6,7 @@ import java.io.File;
 
 public class ClearDirectories {
 
-    public ClearDirectories(Activity c , String filepath){
+    public static  void Clear(Activity c , String filepath){
 
             File fileList =new File(filepath);
             if (fileList != null){

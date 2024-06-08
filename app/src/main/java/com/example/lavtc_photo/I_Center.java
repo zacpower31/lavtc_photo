@@ -1,9 +1,11 @@
 package com.example.lavtc_photo;
 
+import static com.example.lavtc_photo.DataReference.Data;
+import static com.example.lavtc_photo.DataReference.getData;
+import static com.example.lavtc_photo.DataReference.setData;
+
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -12,12 +14,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,17 +25,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class I_Center extends AppCompatActivity {
 
     FloatingActionButton add_picture;
     MaterialButton save_pdf;
     androidx.appcompat.widget.Toolbar toolbar;
-
+    Image temp_image_file;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,14 +44,17 @@ public class I_Center extends AppCompatActivity {
         add_picture = findViewById(R.id.add_pdf_image);
         save_pdf = findViewById(R.id.save_pdf);
 
+        Data data = new Data();
+        setData(data);
 
-        refresh();
+        getData().PDF_Paths_List.clear();
+        reloadView();
 
         add_picture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                getData().setImageType(Data.Image_type.PDF);
                 Intent intent = new Intent(I_Center.this,camera.class);
-                intent.putExtra("pdf",true);
                 startActivity(intent);
             }
         });
@@ -59,7 +62,7 @@ public class I_Center extends AppCompatActivity {
         save_pdf.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                pdf_save_dialogbox dialogbox = new pdf_save_dialogbox(I_Center.this,getData());
+                pdf_save_dialogbox dialogbox = new pdf_save_dialogbox(I_Center.this,getViewList());
                 dialogbox.show();
             }
         });
@@ -72,35 +75,26 @@ public class I_Center extends AppCompatActivity {
         toolbar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ClearDirectories clear = new ClearDirectories(I_Center.this,getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
+                ClearDirectories.Clear(I_Center.this,getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
                 finish();
             }
         });
 
     }
 
-    private ArrayList<Image> getData() {
-        ArrayList<Image> images = new ArrayList<>();
-        File downloadsFolder = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf");
-
-        Image s;
-
-        if (downloadsFolder.exists()){
-
-            File[] files = downloadsFolder.listFiles();
-
-            for (int i = 0;i<files.length;i++){
-                File file = files[i];
-                s = new Image();
-                s.setFilename(file.getName());
-                s.setUri(Uri.fromFile(file));
-                images.add(s);
-            }
-
+    private ArrayList<Image> getViewList() {
+        ArrayList<Image> temp_list = new ArrayList<>();
+        for (Map.Entry<String,String> data: getData().PDF_Paths_List.entrySet()) {
+            File temp = new File(data.getValue());
+            temp_image_file = new Image();
+            temp_image_file.setFilename(temp.getName());
+            temp_image_file.setIndex(data.getKey());
+            temp_image_file.setUri(Uri.fromFile(temp));
+            temp_list.add(temp_image_file);
         }
-        return images;
-    }
 
+        return  (!temp_list.isEmpty())?temp_list:new ArrayList<>();
+    }
 
     public class RecycleView_Adapter extends RecyclerView.Adapter<My_ViewHolder>{
 
@@ -122,7 +116,7 @@ public class I_Center extends AppCompatActivity {
         @Override
         public void onBindViewHolder(@NonNull My_ViewHolder holder, int position) {
             Image image = images.get(position);
-            holder.filePath.setText(image.getFilename());
+            holder.index.setText(image.getIndex());
             Glide.with(c).load(image.getUri()).into(holder.imageView);
 
         }
@@ -137,17 +131,17 @@ public class I_Center extends AppCompatActivity {
 
         ImageView imageView;
         MaterialButton delete;
-        TextView filePath;
+        TextView index;
         public My_ViewHolder(@NonNull View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.img_holder);
             delete = itemView.findViewById(R.id.delete);
-            filePath = itemView.findViewById(R.id.uri);
+            index = itemView.findViewById(R.id.uri);
 
             delete.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    DeleteFile(filePath.getText().toString());
+                    DeleteFile(index.getText().toString());
                 }
             });
 
@@ -161,27 +155,32 @@ public class I_Center extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        refresh();
+        reloadView();
     }
 
 
-    private void refresh(){
+    private void reloadView(){
+        if (!getData().PDF_Paths_List.isEmpty()) { save_pdf.setVisibility(View.VISIBLE); }
+        else { save_pdf.setVisibility(View.INVISIBLE); }
+
+        if(getData().PDF_PATH != null) { getData().setPDF_Path(getData().PDF_PATH);}
+        if(getData().PDF_Paths_List.isEmpty()) { return; }
+        getData().setPDF_PATH(null);
+
         RecyclerView recyclerView = findViewById(R.id.view_recycle);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(new RecycleView_Adapter(I_Center.this,getData()));
+        recyclerView.setAdapter(new RecycleView_Adapter(I_Center.this,getViewList()));
 
     }
 
-    private void DeleteFile(String filename) {
+    private void DeleteFile(String index) {
         CoordinatorLayout layout = findViewById(R.id.layout);
-        File file = new File(getExternalFilesDir(Environment.getDataDirectory().getAbsolutePath())+"/pdf/"+filename);
-        if (file.exists()){
-            Snackbar.make(I_Center.this, layout, "File Deleted", Snackbar.LENGTH_SHORT).show();
+        File file = new File(getData().PDF_Paths_List.get(index));
+
+        if(file.exists()){
             file.delete();
-            refresh();
-        }
-        else {
-            Toast.makeText(this, "no", Toast.LENGTH_SHORT).show();
+            getData().PDF_Paths_List.remove(index);
+            reloadView();
         }
     }
 

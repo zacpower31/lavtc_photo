@@ -32,6 +32,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.AttributeSet;
@@ -168,12 +169,13 @@ public class camera extends AppCompatActivity {
     private void capturePhoto() {
         Snackbar.make(camera.this, findViewById(R.id.layer),"Processing....",Snackbar.LENGTH_SHORT).show();
         boolean pdf_bool = getIntent().getBooleanExtra("pdf",false);
+        DataReference.Data.Image_type type = DataReference.getData().type;;
 
         File directory;
 
         String filename = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 
-        if (!pdf_bool) {
+        if (type == DataReference.Data.Image_type.PROFILE) {
            directory = getExternalFilesDir(Environment.MEDIA_BAD_REMOVAL);
         }
         else {
@@ -186,12 +188,10 @@ public class camera extends AppCompatActivity {
             @Override
             public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
 
-
-                if (!pdf_bool) {
+                if (type == DataReference.Data.Image_type.PROFILE) {
                     try {
-                        saveImageLocation(image.getAbsolutePath(),false);
+                        DataReference.getData().setFILE_PATH(image.getAbsolutePath());
                         Intent intent = new Intent(camera.this, image_viewer.class);
-                        intent.putExtra("file_path",image.getAbsolutePath());
                         startActivity(intent);
                         finish();
                     }
@@ -203,12 +203,14 @@ public class camera extends AppCompatActivity {
                    // message.putExtra("path",image.getAbsolutePath());
                     //sendBroadcast(message);
                     try {
-                        saveImageLocation(image.getAbsolutePath(),true);
+                        DataReference.getData().setPDF_PATH(image.getAbsolutePath());
                         finish();
                     }catch (Exception ex) {
                         Toast.makeText(pdf, ex.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }
+
+
             }
             @Override
             public void onError(@NonNull ImageCaptureException exception) {

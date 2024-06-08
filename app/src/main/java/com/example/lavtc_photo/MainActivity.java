@@ -1,56 +1,35 @@
 package com.example.lavtc_photo;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.GravityInt;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.camera.core.Camera;
-import androidx.camera.core.CameraSelector;
-import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
-import androidx.camera.core.ImageProxy;
-import androidx.camera.core.Preview;
-import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.video.VideoCapture;
-import androidx.camera.view.PreviewView;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.view.GravityCompat;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.lifecycle.LifecycleOwner;
-
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.ContentValues;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.google.android.material.button.MaterialButton;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
-import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import  com.example.lavtc_photo.DataReference.*;
 public class MainActivity extends AppCompatActivity  {
 
     FloatingActionButton camera;
@@ -75,26 +54,26 @@ public class MainActivity extends AppCompatActivity  {
         checkForPermissions();
         setNavigationView();
 
-
-        
-
         camera.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View view) {
-                makeDirectories();
+                CheckDIRStatus();
+                Data data = new Data();
+                data.setProcess(Data.Process.MAIN_MENU);
+                data.setImageType(Data.Image_type.PROFILE);
+                DataReference.setData(data);
                 Intent intent = new Intent(MainActivity.this, com.example.lavtc_photo.camera.class);
-                Intent message = new Intent("Display image");
-                intent.putExtra("pdf",false);
-                sendBroadcast(message);
                 startActivity(intent);
             }
         });
 
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public boolean onNavigationItemSelected(MenuItem menuItem)  {
                 Intent intent ;
-                makeDirectories();
+                CheckDIRStatus();
                 switch (menuItem.getItemId()){
                     case R.id.nav_JPGGallery:
                         drawerLayout.closeDrawer(GravityCompat.START);
@@ -161,64 +140,42 @@ public class MainActivity extends AppCompatActivity  {
     }
 
     private void checkForPermissions() {
-        //make directory
-
-
-
-        String manifest_camera = Manifest.permission.CAMERA;
-        String manifest_write_data = Manifest.permission.WRITE_EXTERNAL_STORAGE;
-        String manifest_read_data = Manifest.permission.READ_EXTERNAL_STORAGE;
-        String manifest_manage_data = Manifest.permission.MANAGE_EXTERNAL_STORAGE;
-
-
-
+        String MANIFEST_CAMERA = Manifest.permission.CAMERA;
+        String MANIFEST_WRITE_DATA = Manifest.permission.WRITE_EXTERNAL_STORAGE;
+        String MANIFEST_READ_DATA = Manifest.permission.READ_EXTERNAL_STORAGE;
+        String MANIFEST_MANAGE_DATA = Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 
         if(Build.VERSION.SDK_INT >= 30){
-            Toast.makeText(this, "Android 11", Toast.LENGTH_SHORT).show();
-            pending_permissions = new String[]{manifest_camera, manifest_write_data, manifest_manage_data};
+            pending_permissions = new String[]{MANIFEST_CAMERA, MANIFEST_WRITE_DATA, MANIFEST_MANAGE_DATA};
         }
         else {
-            pending_permissions = new String[]{manifest_camera, manifest_read_data, manifest_write_data};
+            pending_permissions = new String[]{MANIFEST_CAMERA, MANIFEST_READ_DATA, MANIFEST_WRITE_DATA};
         }
-        //ActivityCompat.requestPermissions(MainActivity.this,permissions,1);
-
-
         requestPermissionLauncher.launch(pending_permissions);
 
     }
 
-    private ActivityResultLauncher<String[]> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), isGranted ->{
+    private ActivityResultLauncher<String[]> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), isGranted ->{});
 
-    });
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void CheckDIRStatus(){
+        check("/id/");
+        check("/id/JPG");
+        check("/id/PDF");
+        check("/I-Center/");
 
-    private void makeDirectories(){
-        String sdCard = Environment.getExternalStorageDirectory().toString();
-
-        File a = new File(getExternalFilesDir(Environment.DIRECTORY_ALARMS),"hell");
-        if(!a.mkdir()){
-            a.mkdir();
-        }
-
-         File file = new File(sdCard + "/id/");
-        if (!file.mkdir()) {
-            file.mkdir();
-        }
-
-        File jpg_file = new File(sdCard + "/id/JPG");
-        if (!jpg_file.mkdir()) {
-            jpg_file.mkdir();
-        }
-
-        File pdf_file = new File(sdCard + "/id/PDF");
-        if (!pdf_file.mkdir()) {
-            pdf_file.mkdir();
-        }
-
-        File file2 = new File(sdCard + "/I-Center/");
-        if (!file2.mkdir()) {
-            file2.mkdir();
-        }
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void check(String path){
+        String ROOT = Environment.getExternalStorageDirectory().toString();
+        File temp = new File(ROOT+path);
+        if(!temp.exists()){
+            temp.mkdir();
+        }
+
+    }
+
 }
 
 
